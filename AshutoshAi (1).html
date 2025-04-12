@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Career Path Advisor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      background-image: url('https://www.realvnc.com/wp-content/uploads/2022/03/Career-progression.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative">
+
+  <!-- Overlay -->
+  <div class="absolute inset-0 bg-black bg-opacity-50 z-0"></div>
+
+  <!-- Content Container -->
+  <div class="z-10 w-full max-w-md text-white">
+    <!-- Title -->
+    <h1 class="text-4xl font-bold text-center mb-6 drop-shadow-lg">Career Path Advisor</h1>
+
+    <!-- Initial Subject Selector -->
+    <div class="bg-white bg-opacity-80 rounded-xl p-4 mb-4 text-black shadow-lg">
+      <label for="subject-select" class="block text-lg font-semibold mb-2">What is your favorite subject or interest?</label>
+      <select id="subject-select" class="w-full p-2 rounded-lg border border-gray-300 mb-2">
+        <option value="" disabled selected>Select one...</option>
+        <option value="Engineering">Engineering</option>
+        <option value="Science">Science</option>
+        <option value="Commerce">Commerce</option>
+        <option value="Arts">Arts</option>
+        <option value="Technology">Technology</option>
+        <option value="Medicine">Medicine</option>
+        <option value="Sports">Sports</option>
+        <option value="I’m not sure">I’m not sure</option>
+      </select>
+      <button onclick="sendInterest()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Submit</button>
+    </div>
+
+    <!-- Chat Window -->
+    <div id="chatbox" class="bg-white bg-opacity-90 rounded-2xl shadow-lg p-4 h-96 overflow-y-auto mb-4 space-y-2 text-black">
+      <!-- Chat messages will appear here -->
+    </div>
+
+    <!-- Input Area -->
+    <div class="flex">
+      <input id="user-input" type="text" placeholder="Type your question here..."
+             class="flex-grow p-3 rounded-l-xl border-t border-b border-l border-gray-300 
+                    text-black bg-white placeholder-gray-500 
+                    focus:outline-none focus:ring focus:border-blue-400"/>
+      <button onclick="sendMessage()" class="bg-red-600 text-white px-5 rounded-r-xl hover:bg-blue-700">
+        Send
+      </button>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script>
+    const API_KEY = "AIzaSyCC6QyNGRG73aDQf6GxRnxlEwR1O_HgYrw"; // 🔐 Replace with your real key
+  
+    const chatbox = document.getElementById('chatbox');
+  
+    function sendMessage() {
+      const inputField = document.getElementById('user-input');
+      const userText = inputField.value.trim();
+  
+      if (userText === '') return;
+  
+      addMessage('You', userText, 'text-right text-blue-700 bg-blue-100');
+      inputField.value = '';
+  
+      fetchGeminiResponse(userText);
+    }
+  
+    function sendInterest() {
+      const select = document.getElementById('subject-select');
+      const value = select.value;
+  
+      if (!value) return;
+  
+      addMessage('You', value, 'text-right text-blue-700 bg-blue-100');
+      fetchGeminiResponse(value);
+  
+      select.selectedIndex = 0;
+    }
+  
+    function addMessage(sender, text, classes) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `${classes} p-2 rounded-xl max-w-xs break-words`;
+      messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      chatbox.appendChild(messageDiv);
+      chatbox.scrollTop = chatbox.scrollHeight;
+    }
+  
+    async function fetchGeminiResponse(userInput) {
+      try {
+        const res = await fetch(
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + API_KEY,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: userInput }] }]
+            })
+          }
+        );
+  
+        const data = await res.json();
+  
+        const botReply =
+          data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+          "Sorry, I couldn't generate a reply.";
+  
+        addMessage("Advisor Bot", botReply, "text-left text-black bg-white");
+      } catch (error) {
+        console.error(error);
+        addMessage(
+          "Advisor Bot",
+          "There was an error reaching the Gemini API.",
+          "text-left text-black bg-white"
+        );
+      }
+    }
+  </script>
+  
+</body>
+</html>
